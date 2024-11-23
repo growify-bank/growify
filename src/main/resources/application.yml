@@ -1,3 +1,24 @@
 spring:
   application:
     name: growify
+  profiles:
+    active: dev
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  application:
+    name: growify-dev
+  datasource:
+    url: jdbc:h2:mem:growify-devdb
+    driver-class-name: org.h2.Driver
+    username: sa
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
