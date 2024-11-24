@@ -19,24 +19,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      # Setup Java
+      - name: Set up JDK 21
+        uses: actions/setup-java@v3
         with:
-          node-version: '16'
+          java-version: '21'
+          distribution: 'adoptopenjdk'
 
-      - name: Cache Node.js modules
+      - name: Cache Maven dependencies
         uses: actions/cache@v3
         with:
-          path: ~/.npm
-          key: "${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}"
+          path: ~/.m2/repository
+          key: "${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}"
           restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install dependencies
-        run: npm install
+            ${{ runner.os }}-maven-
 
       - name: Build the project
-        run: npm run build
+        run: mvn clean install -DskipTests
 
       - name: Run tests
-        run: npm test
+        run: mvn test
