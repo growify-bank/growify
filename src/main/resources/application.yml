@@ -15,10 +15,15 @@ spring:
     url: jdbc:h2:mem:growify-devdb
     driver-class-name: org.h2.Driver
     username: sa
+    password: password
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: update  # Cria as tabelas no banco de dados com base nas entidades
+    show-sql: true  # Exibe as queries SQL no console
     properties:
       hibernate:
-        format_sql: true
+        format_sql: true  # Formata as queries SQL para facilitar a leitura
+  h2:
+    console:
+      enabled: true  # Habilita o console do H2 para visualização no navegador (http://localhost:8080/h2-console)
+      path: /h2-console  # Define a URL de acesso ao console H2
