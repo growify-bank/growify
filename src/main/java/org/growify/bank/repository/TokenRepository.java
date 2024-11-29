@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface TokenRepository extends JpaRepository<Token, String> {
     List<Token> findAllValidTokenByUser(String id);
+    List<Token> findAllByUserId(String userId);
 }
