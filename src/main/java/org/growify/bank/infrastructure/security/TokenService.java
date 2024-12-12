@@ -11,15 +11,11 @@ import java.security.interfaces.RSAPublicKey;
 @RequiredArgsConstructor
 public class TokenService {
 
-    @Value("${security.token.private-key}")
     private RSAPrivateKey privateKey;
 
-    @Value("${security.token.public-key}")
     private RSAPublicKey publicKey;
 
-    @Value("${security.token.expiration-token}")
     private Integer expirationToken;
 
-    @Value("${security.token.expiration-refresh-token}")
     private Integer expirationRefreshToken;
 }
