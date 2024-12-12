@@ -1,0 +1,6 @@
+security:
+  token:
+    private-key: 'classpath:app.key'
+    public-key: 'classpath:app.pub'
+    expiration-token: 15
+    expiration-refresh-token: 30
