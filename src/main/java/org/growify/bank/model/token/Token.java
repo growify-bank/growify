@@ -1,18 +1,27 @@
 package org.growify.bank.model.token;
 
-import jakarta.persistence.Table;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import lombok.*;
+import org.growify.bank.model.user.User;
 
-import lombok.Getter;
+@Data
+@Getter
+@Setter
+@Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 
-import java.util.UUID;
-
-@Table(schema = "user_tokens")
-@Entity public class Token {
-    @Getter
+public class Token {
+    @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Id private UUID id;
+    private String id;
+    private String tokenValue;
+    private TokenType tokenType;
+    private boolean tokenRevoked;
+    private boolean tokenExpired;
+    private User user;
 }
