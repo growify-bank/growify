@@ -1,20 +1,35 @@
 package org.growify.bank.model.user;
 
-import jakarta.persistence.*;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import org.growify.bank.model.token.Token;
 
-import java.util.List;
-import java.util.UUID;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
-@Data
-@Entity
-@Table(schema = "users", name = "users")
-public class User {
+import java.util.List;
+
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter @Setter
+@Table(name = "users")
+@Entity public class User {
 
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Id private UUID id;
+    @Id private String id;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -31,7 +46,4 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Token> tokens;
-
-    public User() {
-    }
 }

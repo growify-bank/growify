@@ -1,20 +1,33 @@
 package org.growify.bank.model.token;
 
-import jakarta.persistence.*;
-import lombok.Data;  
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import org.growify.bank.model.user.User;
 
-import java.util.UUID;
-
-@Entity
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter @Setter
 @Table(schema = "user_tokens")
-@Data
-public class Token {
+@Entity public class Token {
 
-    @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+    @Id private String id;
 
     @Column(nullable = false, unique = true)
     private String tokenValue;
