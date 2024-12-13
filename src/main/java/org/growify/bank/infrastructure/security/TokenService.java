@@ -1,7 +1,13 @@
 package org.growify.bank.infrastructure.security;
 
+import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTCreationException;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.RequiredArgsConstructor;
+import org.growify.bank.exception.TokenGenerationException;
+import org.growify.bank.model.token.Token;
 import org.growify.bank.model.user.User;
 import org.growify.bank.repository.TokenRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +18,8 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Date;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -31,27 +39,55 @@ public class TokenService {
 
     private final TokenRepository tokenRepository;
 
-    public String generateToken(User user, Integer expiration){
-        return "";
+    public String generateToken(User user, Integer expiration) {
+        try {
+            Algorithm algorithm = getAlgorithm();
+            return JWT.create()
+                    .withIssuer("auth-api")
+                    .withSubject(user.getEmail())
+                    .withClaim("Name", user.getName())
+                    .withAudience(user.getRole().name())
+                    .withIssuedAt(Date.from(Instant.now()))
+                    .withExpiresAt(getExpirationDate(expiration))
+                    .sign(algorithm);
+        } catch (JWTCreationException exception) {
+            throw new TokenGenerationException("Error while generating token", exception);
+        }
     }
 
-    public String generateAccessToken(User user){
-        return "";
+    public String generateAccessToken(User user) {
+        return generateToken(user, expirationToken);
     }
 
-    public String generateRefreshToken(User user){
-        return "";
+    public String generateRefreshToken(User user) {
+        return generateToken(user, expirationRefreshToken);
     }
 
-    public String validateToken(String token){
-        return  "";
+    public String validateToken(String token) {
+        try {
+            Algorithm algorithm = getAlgorithm();
+            DecodedJWT decodedJWT = JWT
+                    .require(algorithm)
+                    .withIssuer("auth-api")
+                    .build()
+                    .verify(token);
+
+            Optional<Token> optionalToken = tokenRepository.findByTokenValue(token);
+            if (optionalToken.isEmpty()) {
+                return null;
+            }
+
+            return decodedJWT.getSubject();
+        } catch (JWTVerificationException ex) {
+            return null;
+        }
     }
 
-    public Algorithm getAlgorithm(){
+    public Algorithm getAlgorithm() {
         return Algorithm.RSA256(publicKey, privateKey);
     }
 
-    public Instant getExpirationDate(Integer expiration){
+    public Instant getExpirationDate(Integer expiration) {
         return LocalDateTime.now().plusMinutes(expiration).toInstant(ZoneOffset.of("-03:00"));
     }
 }
