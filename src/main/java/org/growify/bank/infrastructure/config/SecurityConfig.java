@@ -29,7 +29,6 @@ public class SecurityConfig {
     final AuthenticateSecurityConfig authenticateSecurityConfig;
     final UserSecurityConfig userSecurityConfig;
     final CustomLogoutHandler logoutHandler;
-    private final SecurityAutoConfiguration securityAutoConfiguration;
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
