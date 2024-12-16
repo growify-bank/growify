@@ -1,4 +1,4 @@
-package org.growify.bank.service.strategy.Impl;
+package org.growify.bank.service.strategy.impl;
 
 import org.growify.bank.repository.UserRepository;
 import org.growify.bank.service.strategy.EmailAlreadyValidationStrategy;

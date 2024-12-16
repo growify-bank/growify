@@ -1,4 +1,4 @@
-package org.growify.bank.service.strategy.Impl;
+package org.growify.bank.service.strategy.impl;
 
 import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.growify.bank.service.strategy.UserIdValidationStrategy;
