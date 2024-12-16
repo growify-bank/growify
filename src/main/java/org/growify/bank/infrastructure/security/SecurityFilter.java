@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.growify.bank.exception.TokenInvalidException;
-import org.growify.bank.model.user.User;
 import org.growify.bank.repository.TokenRepository;
 import org.growify.bank.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -16,12 +15,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Optional;
 
 @Component
 @Slf4j
@@ -31,7 +28,6 @@ public class SecurityFilter extends OncePerRequestFilter {
     final TokenService tokenService;
     final TokenRepository tokenRepository;
     final UserRepository userRepository;
-    final UserDetailsService userDetailsService; // Adicionado
     final HttpServletRequest request;
 
     @Override
@@ -58,10 +54,14 @@ public class SecurityFilter extends OncePerRequestFilter {
             log.debug("[NO_AUTH_HEADER] No Authorization header found in the request.");
             return null;
         }
-        return authHeader.replace("Bearer ", "");
+        String token = authHeader.replace("Bearer ", "");
+        log.debug("[RECOVERED] Token recovered from Authorization header: {}", token);
+        return token;
     }
 
-    public void handleAuthentication(String token, HttpServletResponse response) throws IOException {
+    public void handleAuthentication(String token, HttpServletResponse response)
+            throws IOException {
+
         try {
             String email = tokenService.validateToken(token);
             UserDetails userDetails = getUserDetailsByEmail(email);
@@ -93,15 +93,16 @@ public class SecurityFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
-    public void handleInvalidToken(HttpServletResponse response, Exception e) throws IOException {
+    public void handleInvalidToken(HttpServletResponse response, TokenInvalidException e)
+            throws IOException {
+
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.getWriter().write(e.getMessage());
         log.warn("[TOKEN_INVALID] Invalid token detected: {}", e.getMessage());
     }
 
     private UserDetails getUserDetailsByEmail(String email) {
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        return userOptional.map(user -> userDetailsService.loadUserByUsername(user.getEmail())).orElse(null);
+        return userRepository.findByEmail(email);
     }
 
     private void getError(String token) {
@@ -109,11 +110,11 @@ public class SecurityFilter extends OncePerRequestFilter {
                 getUserAgent(), getIpAddress(), token);
     }
 
-    private String getUserAgent() {
-        return request.getHeader("User-Agent");
-    }
-
     private String getIpAddress() {
         return request.getRemoteAddr();
+    }
+
+    private String getUserAgent() {
+        return request.getHeader("User-Agent");
     }
 }
