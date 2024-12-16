@@ -6,13 +6,12 @@ import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.growify.bank.exception.TokenGenerationException;
 import org.growify.bank.model.token.Token;
 import org.growify.bank.model.user.User;
 import org.growify.bank.repository.TokenRepository;
-import org.growify.bank.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.interfaces.RSAPrivateKey;
@@ -23,14 +22,15 @@ import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TokenService {
 
-    @Value("${security.token.private-key}")
+    @Value("${security.token.jwt-private-key}")
     private RSAPrivateKey privateKey;
 
-    @Value("${security.token.public-key}")
+    @Value("${security.token.jwt-public-key}")
     private RSAPublicKey publicKey;
 
     @Value("${security.token.expiration-token}")
@@ -40,7 +40,6 @@ public class TokenService {
     private Integer expirationRefreshToken;
 
     private final TokenRepository tokenRepository;
-    private final UserRepository userRepository;
 
     public String generateToken(User user, Integer expiration) {
         try {
@@ -53,17 +52,23 @@ public class TokenService {
                     .withIssuedAt(Date.from(Instant.now()))
                     .withExpiresAt(getExpirationDate(expiration))
                     .sign(algorithm);
+
         } catch (JWTCreationException exception) {
+            log.error("[TOKEN_INVALID] Error while generating token for user {}: {}", user.getEmail(), exception.getMessage());
             throw new TokenGenerationException("Error while generating token", exception);
         }
     }
 
     public String generateAccessToken(User user) {
-        return generateToken(user, expirationToken);
+        String token = generateToken(user, expirationToken);
+        log.info("[TOKEN_SUCCESS] Generated access token for user {}: {}", user.getEmail(), token);
+        return token;
     }
 
     public String generateRefreshToken(User user) {
-        return generateToken(user, expirationRefreshToken);
+        String refreshToken = generateToken(user, expirationRefreshToken);
+        log.info("[TOKEN_SUCCESS] Generated refresh token for user {}: {}", user.getEmail(), refreshToken);
+        return refreshToken;
     }
 
     public String validateToken(String token) {
@@ -77,11 +82,22 @@ public class TokenService {
 
             Optional<Token> optionalToken = tokenRepository.findByTokenValue(token);
             if (optionalToken.isEmpty()) {
+                log.warn("[TOKEN_NOT_FOUND] Token not found in the database: {}", token);
                 return null;
             }
 
-            return decodedJWT.getSubject();
+            Token dbToken = optionalToken.get();
+            if (dbToken.isTokenRevoked()) {
+                log.warn("[TOKEN_REVOKED] Token is revoked: {}", token);
+                return null;
+            }
+
+            String subject = decodedJWT.getSubject();
+            log.info("[TOKEN_SUCCESS] Token is valid for subject: {}", subject);
+
+            return subject;
         } catch (JWTVerificationException ex) {
+            log.error("[TOKEN_INVALID] Error while validating token: {}", ex.getMessage());
             return null;
         }
     }
@@ -92,28 +108,5 @@ public class TokenService {
 
     public Instant getExpirationDate(Integer expiration) {
         return LocalDateTime.now().plusMinutes(expiration).toInstant(ZoneOffset.of("-03:00"));
-    }
-
-    public User getUserFromToken(String token) {
-        String email = validateToken(token);
-        if (email != null) {
-            Optional<User> userOptional = userRepository.findByEmail(email); // Usando findByEmail com Optional<User>
-            return userOptional.orElse(null);
-        }
-        return null;
-    }
-
-    public boolean validateToken(String token, UserDetails userDetails) {
-        final String email = validateToken(token);
-        return (email != null && email.equals(userDetails.getUsername()) && !isTokenExpired(token));
-    }
-
-    private boolean isTokenExpired(String token) {
-        try {
-            DecodedJWT decodedJWT = JWT.decode(token);
-            return decodedJWT.getExpiresAt().before(new Date());
-        } catch (JWTVerificationException ex) {
-            return false;
-        }
     }
 }
