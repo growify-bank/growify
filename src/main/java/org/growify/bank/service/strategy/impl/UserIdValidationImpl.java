@@ -10,7 +10,7 @@ public class UserIdValidationImpl implements UserIdValidationStrategy {
         return false;
     }
 
-    public void validate(Authentication authentication, String UserId){
+    public void validate(Authentication authentication, String userId){
 
     }
 }
