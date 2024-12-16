@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.growify.bank.exception.TokenInvalidException;
+import org.growify.bank.model.user.User;
 import org.growify.bank.repository.TokenRepository;
 import org.growify.bank.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -15,10 +16,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Component
 @Slf4j
@@ -28,6 +31,7 @@ public class SecurityFilter extends OncePerRequestFilter {
     final TokenService tokenService;
     final TokenRepository tokenRepository;
     final UserRepository userRepository;
+    final UserDetailsService userDetailsService; // Adicionado
     final HttpServletRequest request;
 
     @Override
@@ -76,7 +80,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     public boolean isTokenValid(String token) {
         return tokenRepository.findByTokenValue(token)
-                .map(t->!t.isTokenExpired() && !t.isTokenRevoked())
+                .map(t -> !t.isTokenExpired() && !t.isTokenRevoked())
                 .orElse(false);
     }
 
@@ -90,14 +94,14 @@ public class SecurityFilter extends OncePerRequestFilter {
     }
 
     public void handleInvalidToken(HttpServletResponse response, Exception e) throws IOException {
-
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.getWriter().write(e.getMessage());
         log.warn("[TOKEN_INVALID] Invalid token detected: {}", e.getMessage());
     }
 
     private UserDetails getUserDetailsByEmail(String email) {
-        return userRepository.findByEmail(email);
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        return userOptional.map(user -> userDetailsService.loadUserByUsername(user.getEmail())).orElse(null);
     }
 
     private void getError(String token) {

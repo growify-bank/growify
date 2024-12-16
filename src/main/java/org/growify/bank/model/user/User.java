@@ -26,10 +26,12 @@ import java.util.List;
 @NoArgsConstructor
 @Getter @Setter
 @Table(name = "users")
-@Entity public class User {
+@Entity
+public class User {
 
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Id private String id;
+    @Id
+    private String id;
 
     @Column(nullable = false, unique = true)
     private String email;

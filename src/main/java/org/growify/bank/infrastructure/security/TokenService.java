@@ -10,7 +10,9 @@ import org.growify.bank.exception.TokenGenerationException;
 import org.growify.bank.model.token.Token;
 import org.growify.bank.model.user.User;
 import org.growify.bank.repository.TokenRepository;
+import org.growify.bank.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.interfaces.RSAPrivateKey;
@@ -38,6 +40,7 @@ public class TokenService {
     private Integer expirationRefreshToken;
 
     private final TokenRepository tokenRepository;
+    private final UserRepository userRepository;
 
     public String generateToken(User user, Integer expiration) {
         try {
@@ -89,5 +92,28 @@ public class TokenService {
 
     public Instant getExpirationDate(Integer expiration) {
         return LocalDateTime.now().plusMinutes(expiration).toInstant(ZoneOffset.of("-03:00"));
+    }
+
+    public User getUserFromToken(String token) {
+        String email = validateToken(token);
+        if (email != null) {
+            Optional<User> userOptional = userRepository.findByEmail(email); // Usando findByEmail com Optional<User>
+            return userOptional.orElse(null);
+        }
+        return null;
+    }
+
+    public boolean validateToken(String token, UserDetails userDetails) {
+        final String email = validateToken(token);
+        return (email != null && email.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+    private boolean isTokenExpired(String token) {
+        try {
+            DecodedJWT decodedJWT = JWT.decode(token);
+            return decodedJWT.getExpiresAt().before(new Date());
+        } catch (JWTVerificationException ex) {
+            return false;
+        }
     }
 }
