@@ -38,6 +38,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Collections.singletonMap(MESSAGE_KEY, ex.getMessage()));
     }
 
+    @ExceptionHandler(CustomAuthenticationException.class)
+    public ResponseEntity<Object> handleCustomAuthenticationException() {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap(MESSAGE_KEY, "Invalid credentials"));
+    }
+
+    @ExceptionHandler(NotAuthenticatedException.class)
+    public ResponseEntity<Object> handleNotAuthenticatedException() {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonMap(MESSAGE_KEY, "Authentication required"));
+    }
+
+    @ExceptionHandler(PasswordsNotMatchException.class)
+    public ResponseEntity<Object> handlePasswordsNotMatchException() {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Collections.singletonMap(MESSAGE_KEY, "Passwords do not match"));
+    }
+
+    @ExceptionHandler(UserAccessDeniedException.class)
+    public ResponseEntity<Object> handleUserAccessDeniedException() {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Collections.singletonMap(MESSAGE_KEY, "Access denied"));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseBody
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
