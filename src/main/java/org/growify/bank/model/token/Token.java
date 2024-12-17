@@ -45,4 +45,7 @@ import org.growify.bank.model.user.User;
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-}
+
+    public boolean isTokenExpired() {
+        return tokenExpired;
+    }
