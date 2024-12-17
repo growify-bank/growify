@@ -1,7 +1,7 @@
 package org.growify.bank.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.growify.bank.model.user.User;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,13 +11,12 @@ import java.util.List;
 @RequestMapping("/users")
 public class UserController {
 
-    @Autowired
-
     // Endpoint para listar todos os usuários
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
         return null;
     }
+
     // Endpoint para obter um usuário por ID
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
@@ -29,9 +28,10 @@ public class UserController {
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
         return null;
     }
+
     // Endpoint para deletar um usuário
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUser(HttpServletRequest request, @PathVariable Long id) {
 
         return null;
     }
