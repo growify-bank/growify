@@ -1,4 +1,4 @@
-package org.growify.bank.service.strategy;
+package org.growify.bank.service.strategy.interfaces;
 
 import org.growify.bank.dto.response.TokenResponseDTO;
 import org.growify.bank.model.user.User;
