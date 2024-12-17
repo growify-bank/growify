@@ -11,22 +11,24 @@ import java.util.List;
 @RequestMapping("/users")
 public class UserController {
 
-    @Autowired
 
     // Endpoint para listar todos os usuários
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers() {
+
         return null;
     }
     // Endpoint para obter um usuário por ID
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
+
         return null;
     }
 
     // Endpoint para atualizar um usuário
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+
         return null;
     }
     // Endpoint para deletar um usuário
