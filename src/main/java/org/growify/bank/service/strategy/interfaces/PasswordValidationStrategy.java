@@ -1,5 +1,5 @@
-package org.growify.bank.service.strategy;
+package org.growify.bank.service.strategy.interfaces;
 
 public interface PasswordValidationStrategy {
-    boolean validatePassword(String password);
+    void validate(String password, String confirmPassword);
 }

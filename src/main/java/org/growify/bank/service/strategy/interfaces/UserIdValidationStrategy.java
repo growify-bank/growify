@@ -1,5 +1,7 @@
-package org.growify.bank.service.strategy;
+package org.growify.bank.service.strategy.interfaces;
+
+import org.springframework.security.core.Authentication;
 
 public interface UserIdValidationStrategy {
-    boolean validateUserId(String userId);
+    void validateUserId(Authentication authentication, String userId);
 }

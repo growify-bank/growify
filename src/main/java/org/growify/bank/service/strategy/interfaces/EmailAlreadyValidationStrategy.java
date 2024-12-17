@@ -1,5 +1,5 @@
-package org.growify.bank.service.strategy;
+package org.growify.bank.service.strategy.interfaces;
 
 public interface EmailAlreadyValidationStrategy {
-    boolean isEmailAlreadyUsed(String email);
+    void validate(String existingEmail, String newEmail, String userIdToExclude);
 }
