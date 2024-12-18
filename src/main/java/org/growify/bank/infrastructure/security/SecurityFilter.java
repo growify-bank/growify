@@ -1,13 +1,13 @@
 package org.growify.bank.infrastructure.security;
 
-import jakarta.annotation.Nonnull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.growify.bank.exception.TokenInvalidException;
+import org.growify.bank.exception.user.TokenInvalidException;
 import org.growify.bank.repository.TokenRepository;
 import org.growify.bank.repository.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -32,19 +32,20 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(
-            @Nonnull HttpServletRequest request,
-            @Nonnull HttpServletResponse response,
-            @Nonnull FilterChain filterChain) throws ServletException, IOException {
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
+
         try {
             String token = recoverTokenFromRequest(request);
-            if (token != null) {
-                handleAuthentication(token, response);
+            if (token != null && !handleAuthentication(token, response)) {
+                return;
             }
-
             filterChain.doFilter(request, response);
-        } catch (Exception ex) {
-            log.error("[ERROR_FILTER] Error processing security filter: {}", ex.getMessage());
-            throw ex;
+        } catch (Exception e) {
+            log.error("[ERROR_FILTER] Error processing security filter: {}", e.getMessage());
+            throw e;
         }
     }
 
@@ -59,23 +60,45 @@ public class SecurityFilter extends OncePerRequestFilter {
         return token;
     }
 
-    public void handleAuthentication(String token, HttpServletResponse response)
+    protected boolean handleAuthentication(String token, HttpServletResponse response)
             throws IOException {
 
         try {
             String email = tokenService.validateToken(token);
-            UserDetails userDetails = getUserDetailsByEmail(email);
+            UserDetails userDetails = userRepository.findByEmail(email);
             boolean isTokenValid = isTokenValid(token);
 
             if (userDetails != null && isTokenValid) {
                 setAuthenticationInSecurityContext(userDetails);
+                log.info("[USER_AUTHENTICATED] User: {} successfully authenticated with token: {}.", userDetails.getUsername(), token);
+                return true;
             } else {
                 getError(token);
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                return false;
             }
         } catch (TokenInvalidException e) {
             handleInvalidToken(response, e);
             getError(token);
+            return false;
         }
+    }
+
+    private void getError(String token) {
+        log.error("[TOKEN_FAILED] User-Agent: {}. IP Address: {}. Validation failed for token: {}",
+                getUserAgent(), getIpAddress(), token);
+    }
+
+    private String getIpAddress() {
+        return request.getRemoteAddr();
+    }
+
+    private String getUserAgent() {
+        return request.getHeader("User-Agent");
+    }
+
+    private UserDetails getUserDetailsByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 
     public boolean isTokenValid(String token) {
@@ -99,22 +122,5 @@ public class SecurityFilter extends OncePerRequestFilter {
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.getWriter().write(e.getMessage());
         log.warn("[TOKEN_INVALID] Invalid token detected: {}", e.getMessage());
-    }
-
-    private UserDetails getUserDetailsByEmail(String email) {
-        return userRepository.findByEmail(email);
-    }
-
-    private void getError(String token) {
-        log.error("[TOKEN_FAILED] User-Agent: {}. IP Address: {}. Validation failed for token: {}",
-                getUserAgent(), getIpAddress(), token);
-    }
-
-    private String getIpAddress() {
-        return request.getRemoteAddr();
-    }
-
-    private String getUserAgent() {
-        return request.getHeader("User-Agent");
     }
 }

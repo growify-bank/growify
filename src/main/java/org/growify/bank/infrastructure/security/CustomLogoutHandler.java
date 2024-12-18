@@ -4,7 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.growify.bank.exception.TokenGenerationException;
+import org.growify.bank.exception.user.TokenGenerationException;
 import org.growify.bank.model.token.Token;
 import org.growify.bank.repository.TokenRepository;
 import org.springframework.http.HttpStatus;

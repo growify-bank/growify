@@ -7,7 +7,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.growify.bank.exception.TokenGenerationException;
+import org.growify.bank.exception.user.TokenGenerationException;
 import org.growify.bank.model.token.Token;
 import org.growify.bank.model.user.User;
 import org.growify.bank.repository.TokenRepository;
@@ -27,19 +27,20 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class TokenService {
 
-    @Value("${security.token.jwt-private-key}")
+    @Value("${security.token.private-key}")
     private RSAPrivateKey privateKey;
 
-    @Value("${security.token.jwt-public-key}")
+    @Value("${security.token.public-key}")
     private RSAPublicKey publicKey;
 
     @Value("${security.token.expiration-token}")
     private Integer expirationToken;
 
     @Value("${security.token.expiration-refresh-token}")
-    private Integer expirationRefreshToken;
+    private Integer refreshTokenExpiration;
 
     private final TokenRepository tokenRepository;
+
 
     public String generateToken(User user, Integer expiration) {
         try {
@@ -66,7 +67,7 @@ public class TokenService {
     }
 
     public String generateRefreshToken(User user) {
-        String refreshToken = generateToken(user, expirationRefreshToken);
+        String refreshToken = generateToken(user, refreshTokenExpiration);
         log.info("[TOKEN_SUCCESS] Generated refresh token for user {}: {}", user.getEmail(), refreshToken);
         return refreshToken;
     }
@@ -96,17 +97,19 @@ public class TokenService {
             log.info("[TOKEN_SUCCESS] Token is valid for subject: {}", subject);
 
             return subject;
-        } catch (JWTVerificationException ex) {
-            log.error("[TOKEN_INVALID] Error while validating token: {}", ex.getMessage());
+
+        } catch (JWTVerificationException exception) {
+            log.error("[TOKEN_INVALID] Error while validating token: {}", exception.getMessage());
             return null;
         }
     }
 
-    public Algorithm getAlgorithm() {
+    private Algorithm getAlgorithm() {
         return Algorithm.RSA256(publicKey, privateKey);
     }
 
-    public Instant getExpirationDate(Integer expiration) {
+    private Instant getExpirationDate(Integer expiration) {
         return LocalDateTime.now().plusMinutes(expiration).toInstant(ZoneOffset.of("-03:00"));
     }
 }
+
