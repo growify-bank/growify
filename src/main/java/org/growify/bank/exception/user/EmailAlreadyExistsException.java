@@ -1,4 +1,4 @@
-package org.growify.bank.exception;
+package org.growify.bank.exception.user;
 
 public class EmailAlreadyExistsException extends RuntimeException {
     public EmailAlreadyExistsException() {

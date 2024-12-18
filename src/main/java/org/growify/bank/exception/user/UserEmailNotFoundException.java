@@ -1,4 +1,4 @@
-package org.growify.bank.exception;
+package org.growify.bank.exception.user;
 
 public class UserEmailNotFoundException extends RuntimeException{
     public UserEmailNotFoundException() {

@@ -1,6 +1,5 @@
-package org.growify.bank.exception;
+package org.growify.bank.exception.user;
 
-import org.growify.bank.exception.user.InvalidOldPasswordException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
