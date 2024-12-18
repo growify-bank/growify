@@ -55,19 +55,21 @@ public class OpenAPIConfig {
 
         openAPI.setInfo(info);
         openAPI.components(new Components()
-                .addSecuritySchemes("JWTToken",
-                        new SecurityScheme()
+                        .addSecuritySchemes("JWTToken", new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
                                 .bearerFormat("JWT")
-                                .scheme("bearer"))
-                .addSecuritySchemes("XSRFToken",
-                        new SecurityScheme()
+                                .scheme("bearer")
+                        )
+                        .addSecuritySchemes("XSRFToken", new SecurityScheme()
                                 .type(SecurityScheme.Type.APIKEY)
+                                .name("X-XSRF-TOKEN")
                                 .in(SecurityScheme.In.HEADER)
-                                .name("X-XSRF-TOKEN")))
+                        )
+                )
                 .addSecurityItem(new SecurityRequirement()
                         .addList("JWTToken")
-                        .addList("XSRFToken"));
+                        .addList("XSRFToken")
+                );
         return openAPI;
     }
 }
