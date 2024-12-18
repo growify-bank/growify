@@ -1,0 +1,35 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+  application:
+    name: growify-dev
+  datasource:
+    url: jdbc:h2:mem:growify-devdb
+    driver-class-name: org.h2.Driver
+    username: sa
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+security:
+  token:
+    private-key: 'classpath:app.key'
+    public-key: 'classpath:app.pub'
+    expiration-token: 15
+    expiration-refresh-token: 30
+
+initiation:
+  admin:
+    password: '@Admin24k+'
+  user:
+    password: '@User24k+'
+
+growify:
+  openapi:
+    dev-url: http://localhost:8080
+    prod-url: https://growify-api.com
