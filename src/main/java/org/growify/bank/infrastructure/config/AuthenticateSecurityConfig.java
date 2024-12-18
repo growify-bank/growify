@@ -15,7 +15,7 @@ public class AuthenticateSecurityConfig extends SecurityConfigurerAdapter<Defaul
                 .requestMatchers(HttpMethod.POST, "/v1/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/v1/auth/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/v1/auth/refresh-token").hasAnyRole("ADMIN", "USER")
-                .requestMatchers(HttpMethod.POST, "/v1/auth/csrf-token").permitAll()
+                .requestMatchers(HttpMethod.GET, "/v1/auth/csrf-token").permitAll()
         );
     }
 }
