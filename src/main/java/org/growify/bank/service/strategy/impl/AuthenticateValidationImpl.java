@@ -1,6 +1,6 @@
 package org.growify.bank.service.strategy.impl;
 
-import org.growify.bank.exception.NotAuthenticatedException;
+import org.growify.bank.exception.user.NotAuthenticatedException;
 import org.growify.bank.service.strategy.interfaces.AuthenticateValidationStrategy;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;

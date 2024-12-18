@@ -1,6 +1,6 @@
 package org.growify.bank.service.strategy.impl;
 
-import org.growify.bank.exception.UserAccessDeniedException;
+import org.growify.bank.exception.user.UserAccessDeniedException;
 import org.growify.bank.model.user.User;
 import org.growify.bank.service.strategy.interfaces.UserIdValidationStrategy;
 import org.springframework.security.core.Authentication;

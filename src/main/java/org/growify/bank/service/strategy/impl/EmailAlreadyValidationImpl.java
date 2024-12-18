@@ -1,7 +1,7 @@
 package org.growify.bank.service.strategy.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.growify.bank.exception.EmailAlreadyExistsException;
+import org.growify.bank.exception.user.EmailAlreadyExistsException;
 import org.growify.bank.model.user.User;
 import org.growify.bank.repository.UserRepository;
 import org.growify.bank.service.strategy.interfaces.EmailAlreadyValidationStrategy;

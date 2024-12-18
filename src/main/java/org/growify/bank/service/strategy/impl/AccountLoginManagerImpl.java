@@ -3,7 +3,7 @@ package org.growify.bank.service.strategy.impl;
 import lombok.RequiredArgsConstructor;
 import org.growify.bank.dto.request.LoginRequestDTO;
 import org.growify.bank.dto.response.TokenResponseDTO;
-import org.growify.bank.exception.CustomAuthenticationException;
+import org.growify.bank.exception.user.CustomAuthenticationException;
 import org.growify.bank.model.user.User;
 import org.growify.bank.repository.UserRepository;
 import org.growify.bank.service.strategy.interfaces.AccountLoginManagerStrategy;

@@ -38,7 +38,7 @@ public class TokenManagerImpl implements AuthenticationTokenManagerStrategy {
 
     @Override
     public void revokeAllUserTokens(User user) {
-        var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
+        var validUserTokens = tokenRepository.findAllValidTokenByUser(user);
         if (!validUserTokens.isEmpty()) {
             validUserTokens.forEach(token -> {
                 token.setTokenExpired(true);

@@ -1,6 +1,6 @@
 package org.growify.bank.service.strategy.impl;
 
-import org.growify.bank.exception.PasswordsNotMatchException;
+import org.growify.bank.exception.user.PasswordsNotMatchException;
 import org.growify.bank.service.strategy.interfaces.PasswordValidationStrategy;
 import org.springframework.stereotype.Component;
 
