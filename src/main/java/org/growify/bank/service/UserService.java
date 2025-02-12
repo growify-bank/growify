@@ -1,25 +1,27 @@
 package org.growify.bank.service;
 
 import lombok.RequiredArgsConstructor;
+
 import org.growify.bank.dto.request.ChangePasswordRequestDTO;
 import org.growify.bank.dto.request.UpdateUserRequestDTO;
 import org.growify.bank.dto.response.TokenResponseDTO;
-import org.growify.bank.dto.response.UserResponseDTO;
 import org.growify.bank.exception.user.UserNotFoundException;
 import org.growify.bank.exception.user.InvalidOldPasswordException;
 import org.growify.bank.model.user.User;
 import org.growify.bank.repository.TokenRepository;
 import org.growify.bank.repository.UserRepository;
-import org.growify.bank.service.strategy.interfaces.*;
-import org.modelmapper.ModelMapper;
-import org.springframework.http.ResponseEntity;
+import org.growify.bank.service.strategy.interfaces.AuthenticateValidationStrategy;
+import org.growify.bank.service.strategy.interfaces.AuthenticationTokenManagerStrategy;
+import org.growify.bank.service.strategy.interfaces.EmailAlreadyValidationStrategy;
+import org.growify.bank.service.strategy.interfaces.PasswordValidationStrategy;
+import org.growify.bank.service.strategy.interfaces.UserIdValidationStrategy;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -35,110 +37,81 @@ public class UserService {
     private final PasswordValidationStrategy passwordValidationStrategy;
     private final UserIdValidationStrategy userIdValidationStrategy;
     private final EmailAlreadyValidationStrategy emailAlreadyValidationStrategy;
-    private final ModelMapper modelMapper;
 
-    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
-
+    public List<User> getAllUsers() {
         List<User> users = userRepository.findAll();
-        if (users.isEmpty()) {
+        if (users.isEmpty())
             throw new UserNotFoundException("No users found");
-        }
 
-        List<UserResponseDTO> response = new ArrayList<>();
-        users.forEach(x -> response.add(modelMapper.map(x, UserResponseDTO.class)));
-
-        return ResponseEntity.ok(response);
+        return users;
     }
 
-    public ResponseEntity<UserResponseDTO> getByUserId(String userId) {
-
-        User existingUser = findUserByIdOrThrow(userId);
-
-        UserResponseDTO userResponse = modelMapper.map(existingUser, UserResponseDTO.class);
-        return ResponseEntity.ok(userResponse);
+    public User getByUserId(String id) {
+        return findUserByIdOrThrow(id);
     }
 
     @Transactional
-    public ResponseEntity<Void> deleteUser(String userId) {
-
-        User existingUser = findUserByIdOrThrow(userId);
-
-        tokenRepository.deleteByUser(existingUser);
-
-        userRepository.delete(existingUser);
-
-        return ResponseEntity.noContent().build();
+    public void deleteUser(String id) {
+        User user = findUserByIdOrThrow(id);
+        tokenRepository.deleteByUser(user);
+        userRepository.delete(user);
     }
 
     @Transactional
-    public ResponseEntity<TokenResponseDTO> updateUser(String userId, UpdateUserRequestDTO updatedUserDto, Authentication authentication) {
+    public TokenResponseDTO updateUser(String id, UpdateUserRequestDTO request, Authentication authentication) {
+        User user = findUserByIdOrThrow(id);
+        authValidationStrategy.validate(authentication);
+        passwordValidationStrategy.validate(request.password(), request.confirmPassword());
+        userIdValidationStrategy.validateUserId(authentication, id);
+        validateEmailUpdate(user, request);
+        updateUserProperties(user, request);
+        userRepository.save(user);
+        authTokenManager.revokeAllUserTokens(user);
+        return authTokenManager.generateTokenResponse(user);
+    }
 
-        User existingUser = findUserByIdOrThrow(userId);
-
+    @Transactional
+    public void changePassword(ChangePasswordRequestDTO request, Authentication authentication) {
         authValidationStrategy.validate(authentication);
 
-        passwordValidationStrategy.validate(updatedUserDto.password(), updatedUserDto.confirmPassword());
-
-        userIdValidationStrategy.validateUserId(authentication, userId);
-
-        validateEmailUpdate(existingUser, updatedUserDto);
-        updateUserProperties(existingUser, updatedUserDto);
-        userRepository.save(existingUser);
-
-        authTokenManager.revokeAllUserTokens(existingUser);
-
-        return ResponseEntity.ok(authTokenManager.generateTokenResponse(existingUser));
-    }
-
-    @Transactional
-    public ResponseEntity<Void> changePassword(ChangePasswordRequestDTO changePasswordRequestDTO, Authentication authentication) {
-
-        authValidationStrategy.validate(authentication);
-
-        User user = (User) authentication.getPrincipal();
-        User existingUser = findUserByIdOrThrow(user.getId());
-
-        if (!passwordEncoder.matches(changePasswordRequestDTO.oldPassword(), existingUser.getPassword())) {
+        User user = findUserByIdOrThrow(((User) authentication.getPrincipal()).getId());
+        if (!passwordEncoder.matches(request.oldPassword(), user.getPassword())) {
             throw new InvalidOldPasswordException();
         }
 
-        existingUser.setPassword(passwordEncoder.encode(changePasswordRequestDTO.newPassword()));
-        userRepository.save(existingUser);
-
-        return ResponseEntity.noContent().build();
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
     }
 
-    private User findUserByIdOrThrow(String userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException("Could not find user with id:" + userId));
+    private User findUserByIdOrThrow(String id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("Could not find user with id: " + id));
     }
 
-    protected void updateUserProperties(User existingUser, UpdateUserRequestDTO updatedUserDto) {
-        updateField(existingUser::setName, existingUser.getName(), updatedUserDto.name());
-        updateField(existingUser::setEmail, existingUser.getEmail(), updatedUserDto.email());
-        updatePassword(existingUser, updatedUserDto.password());
+    private void updateUserProperties(User target, UpdateUserRequestDTO request) {
+        updateField(target::setName, target.getName(), request.name());
+        updateField(target::setEmail, target.getEmail(), request.email());
+        updatePassword(target, request.password());
     }
 
-    protected void updatePassword(User existingUser, String newPassword) {
-        if (StringUtils.hasText(newPassword) && !passwordEncoder.matches(newPassword, existingUser.getPassword())) {
+    private void updatePassword(User target, String newPassword) {
+        if (StringUtils.hasText(newPassword) && !passwordEncoder.matches(newPassword, target.getPassword())) {
             String encryptedPassword = passwordEncoder.encode(newPassword);
-            existingUser.setPassword(encryptedPassword);
+            target.setPassword(encryptedPassword);
         }
     }
 
-    protected <T> void updateField(Consumer<T> setter, T currentValue, T newValue) {
+    private <T> void updateField(Consumer<T> setter, T currentValue, T newValue) {
         if (newValue != null && !newValue.equals(currentValue)) {
             setter.accept(newValue);
         }
     }
 
-    private void validateEmailUpdate(User existingUser, UpdateUserRequestDTO updatedUserDto) {
-        String newEmail = updatedUserDto.email();
-
+    private void validateEmailUpdate(User target, UpdateUserRequestDTO request) {
         emailAlreadyValidationStrategy.validate(
-                existingUser.getEmail(),
-                newEmail,
-                existingUser.getId()
+                target.getEmail(),
+                request.email(),
+                target.getId()
         );
     }
 }

@@ -6,13 +6,19 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
+
 import org.growify.bank.dto.request.ChangePasswordRequestDTO;
 import org.growify.bank.dto.request.UpdateUserRequestDTO;
 import org.growify.bank.dto.response.TokenResponseDTO;
 import org.growify.bank.dto.response.UserResponseDTO;
 import org.growify.bank.service.UserService;
+
+import org.modelmapper.ModelMapper;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +32,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-
+    private final ModelMapper mapper;
 
     @Operation(
             method = "GET",
@@ -52,7 +58,11 @@ public class UserController {
             })
     @GetMapping()
     public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
-        return userService.getAllUsers();
+        List<UserResponseDTO> response = userService.getAllUsers().stream()
+                .map(user -> mapper.map(user, UserResponseDTO.class))
+                .toList();
+
+        return ResponseEntity.ok(response);
     }
 
     @Operation(
@@ -88,7 +98,9 @@ public class UserController {
             })
     @GetMapping("/find/{id}")
     public ResponseEntity<UserResponseDTO> getByUserId(@PathVariable String id) {
-        return userService.getByUserId(id);
+        UserResponseDTO response = mapper.map(userService.getByUserId(id), UserResponseDTO.class);
+
+        return ResponseEntity.ok(response);
     }
 
     @Operation(
@@ -140,12 +152,14 @@ public class UserController {
                             )))
     })
     @PutMapping("/update/{id}")
-    public ResponseEntity<TokenResponseDTO> updateUser(
+    public ResponseEntity<TokenResponseDTO> updateUser (
             @PathVariable String id,
-            @RequestBody @Valid UpdateUserRequestDTO registerRequestDTO,
+            @RequestBody @Valid UpdateUserRequestDTO request,
             Authentication authentication
     ) {
-        return userService.updateUser(id, registerRequestDTO, authentication);
+        TokenResponseDTO response = userService.updateUser(id, request, authentication);
+
+        return ResponseEntity.ok(response);
     }
 
     @Operation(
@@ -169,9 +183,9 @@ public class UserController {
     })
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {
-        return userService.deleteUser(id);
+        userService.deleteUser(id);
+        return ResponseEntity.ok().build();
     }
-
 
     @Operation(
             method = "POST",
@@ -206,9 +220,11 @@ public class UserController {
                             )))
     })
     @PostMapping("/change-password")
-    public ResponseEntity<Void> processChangePassword(
-            @RequestBody @Valid ChangePasswordRequestDTO changePasswordRequestDTO,
-            Authentication authentication) {
-        return userService.changePassword(changePasswordRequestDTO, authentication);
+    public ResponseEntity<Void> processChangePassword (
+            @RequestBody @Valid ChangePasswordRequestDTO request,
+            Authentication authentication
+    ) {
+        userService.changePassword(request, authentication);
+        return ResponseEntity.ok().build();
     }
 }
