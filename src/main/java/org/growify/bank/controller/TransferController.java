@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/transfer-cpf")
+@RequestMapping("/v1/transfer")
 @RequiredArgsConstructor
-public class TransferCPFController {
+public class TransferController {
 
     private final TransferService transferCPFService;
 
